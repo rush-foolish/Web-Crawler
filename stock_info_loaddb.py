@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 #####################################################
-#	File Name: stock_info_recnt.py
+#	File Name: stock_info_loaddb.py
 #	Author: Rachel Liu
 #	Created Time: 2017-05-02
 #	Description: this is for the stock info fetched 

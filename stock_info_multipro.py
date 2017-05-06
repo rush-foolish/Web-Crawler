@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 #####################################################
-#	File Name: stock_info_recnt.py
+#	File Name: stock_info_multipro.iy
 #	Author: Rachel Liu
-#	Created Time: 2017-05-02
+#	Created Time: 2017-05-03
 #	Description: this is for the stock info fetched 
 #	from stock star website, the frequence of the info
-#	is 5 min/time in the period 9:00 - 15:00 
+#	is 1/5 min/time in the period 9:00 - 15:00 
 #	
-#	Modified History: 
+#	Modified History: use the class to package the code
 #	
 #	Copyright (C)2017 All Rights Reserved
 #####################################################
