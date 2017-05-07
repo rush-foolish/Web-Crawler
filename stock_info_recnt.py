@@ -6,7 +6,7 @@
 #	Created Time: 2017-05-02
 #	Description: this is for the stock info fetched 
 #	from stock star website, the frequence of the info
-#	is 5 min/time in the period 9:00 - 15:00 
+#	is 1/5 min/time in the period 9:00 - 15:00 
 #	
 #	Modified History: 
 #	
@@ -27,39 +27,30 @@ import pymysql
 #     with open(file_name + '.csv', 'a', newline = '',encoding='utf-8') as file:
 #         file.write(row_line)
 
-class stock_crawler(object):
-
-    def __init__(self, db, type, pagenm):
-        self.__db = db
-        self.__table = 'stock_market_'+type
-        self.__pagenm = pagenm
-        self.__url = 'http://quote.stockstar.com/stock/ranklist_%s_1_0_'%type + '%d.html'
-        self.__sql = "insert into {0} values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)".format(self.__table)
-
-    def dbconn(self):
-        dbconcfg = {'host':'localhost',
-                'user':'root',
-                'passwd':'root123',
-                'db': self.__db,
-                'charset':'utf8'}
-        try:
-            conn = pymysql.connect(**dbconcfg)
-            print('DB connect sucessfully...')
-        except pymysql.Error as e:
-            print("stock fetch failed as calling the function dbconn in %s, the error is %s" %(__name__, e))
-
-        cursor = conn.cursor()
+class stock_crawler(object): ##stockstar web
+    
+    # @classmethod
+    def __init__(self, stock):
+        self.__cursor = stock['cursor']
+        self.__table = 'stock_market_' + stock['type']
+        self.__pagenm = stock['pgnm']
+        self.__url = 'http://quote.stockstar.com/stock/ranklist_%s_1_0_' %stock['type'] + '%d.html'
         
-        # tb = {'conn':conn,'cursor':cursor,'sql':sql}
-        self.__conn, self.__cursor = (conn, cursor)
-        return {'conn': self.__conn, 'cursor': self.__cursor}
-
+        if stock['type'] in ('a' , 'b'):
+            self.__sql = "insert into {0} values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)".format(self.__table)
+        else:
+            self.__sql = "insert into {0} values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)".format(self.__table)
+        #when implementing constructor, intialize the variate/parameter and excute the stock fetch
+        self.excute()
    
     def load_data(self, values):
-        self.__cursor.executemany(self.__sql, values)
+        try:
+            self.__cursor.executemany(self.__sql, values)
+        except pymysql.Error as e:
+            print('Insert table %s error, check the insert script: \n %s' %(self.__table, self.__sql))
 
     @classmethod
-    def fetch_stock(self, url): ##stockstar web
+    def fetch_stock(self, url): 
         headers={"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36"}
         request=urllib.request.Request(url=url,headers=headers)
         response = urllib.request.urlopen(request)
@@ -84,10 +75,28 @@ class stock_crawler(object):
     def excute(self):
         p = Pool(4)
         for i in range(1,self.__pagenm+1):
+            #callback will get stuck, but can call another function by using the return-result
             p.apply_async(self.fetch_stock, args=(self.__url%i,), callback=self.load_data) 
 
         p.close()
         p.join()
+
+
+def dbconn(db):
+    dbconcfg = {'host':'localhost',
+            'user':'root',
+            'passwd':'root123',
+            'db': db,
+            'charset':'utf8'}
+    try:
+        conn = pymysql.connect(**dbconcfg)
+        print('DB connect sucessfully...')
+    except pymysql.Error as e:
+        print("stock fetch failed as calling the function dbconn in %s, the error is %s" %(__name__, e))
+
+    cursor = conn.cursor()
+
+    return {'conn': conn, 'cursor': cursor}
 
 
 # # find the format rule of url
@@ -96,29 +105,27 @@ class stock_crawler(object):
 
 if __name__=='__main__':
 
-    start = datetime.datetime.now()
+    db = dbconn('test')
 
-    #url = 'http://quote.stockstar.com/stock/ranklist_%s_1_0_%d.html'
-
-    l = [ {'type':'small', 'pgnm':29}, 
-        {'type':'gem', 'pgnm':21},
-        {'type':'a', 'pgnm':107},
-        {'type':'b', 'pgnm':4} ]
-
+    lstock = [ {'type':'small', 'pgnm':29, 'cursor':db['cursor']}, 
+        {'type':'gem', 'pgnm':21, 'cursor':db['cursor']},
+        {'type':'a', 'pgnm':107, 'cursor':db['cursor']},
+        {'type':'b', 'pgnm':4, 'cursor':db['cursor']} ]
 
     print('Waiting for all subprocesses done...')
 
-    # for stock in l :
-        # print (stock['type'])
-    s = stock_crawler('test', l[1]['type'], l[1]['pgnm'])
+    p = Pool(4)
 
-    db = s.dbconn()
-    s.excute()
+    for i in range(len(lstock)) :
+        # print(lstock[i])
+        # stock_crawler(lstock[i])
+        p.apply_async( stock_crawler(lstock[i]) ) 
+        # t = stock_crawler({'cursor':db['cursor'], 'type':s['type'], 'pagenm':s['pgnm']})    
+    p.close()
+    p.join()
 
     db['cursor'].close()
     db['conn'].commit() 
 
-    end = datetime.datetime.now()
-    print('All subprocesses done. time usage %s' %(end-start))
 
 
