@@ -1,0 +1,4 @@
+*/2 9-10 * * 1-5 python3 /home/rachel/Python/stock_info_recnt.py 2>&1 >>/home/rachel/Python/fetch_stock_info.log
+0-34/2 11 * * 1-5 python3 /home/rachel/Python/stock_info_recnt.py 2>&1 >>/home/rachel/Python/fetch_stock_info.log
+*/2  13,14 * * 1-5 python3 /home/rachel/Python/stock_info_recnt.py 2>&1 >>/home/rachel/Python/fetch_stock_info.log
+0-4/2 15 * * 1-5 python3 /home/rachel/Python/stock_info_recnt.py 2>&1 >>/home/rachel/Python/fetch_stock_info.log

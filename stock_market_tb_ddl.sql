@@ -1,4 +1,4 @@
-te table stock_market_a (
+create table stock_market_a (
 	STOCK_ID VARCHAR(6) NOT NULL,
 	STOCK_NM VARCHAR(15),
 	STK_PRC_RT VARCHAR(10),
