@@ -16,10 +16,12 @@
 import urllib.request
 from bs4 import BeautifulSoup
 from multiprocessing import Pool
-import datetime
+import datetime,time 
 import pymysql
 
-
+# multiprocessing may cause zombie process
+# bug: https://mail.python.org/pipermail/python-bugs-list/2015-December/287698.html
+# http://stackoverflow.com/questions/30506489/python-multiprocessing-leading-to-many-zombie-processes
 
 
 # def writerow_csv(row_line):
@@ -41,6 +43,7 @@ class stock_crawler(object): ##stockstar web
         else:
             self.__sql = "insert into {0} values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)".format(self.__table)
         #when implementing constructor, intialize the variate/parameter and excute the stock fetch
+        print("stock %s is begining at %s"%(self.__table,datetime.datetime.now().strftime('%H:%M:%S')))
         self.excute()
    
     def load_data(self, values):
@@ -51,8 +54,8 @@ class stock_crawler(object): ##stockstar web
 
     @classmethod
     def fetch_stock(self, url): 
-        headers={"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36"}
-        request=urllib.request.Request(url=url,headers=headers)
+        headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36"}
+        request = urllib.request.Request(url=url,headers=headers)
         response = urllib.request.urlopen(request)
         result = response.read().decode('gbk')
         soup = BeautifulSoup(result, "html.parser")
@@ -77,7 +80,7 @@ class stock_crawler(object): ##stockstar web
         for i in range(1,self.__pagenm+1):
             #callback will get stuck, but can call another function by using the return-result
             p.apply_async(self.fetch_stock, args=(self.__url%i,), callback=self.load_data) 
-
+	
         p.close()
         p.join()
 
@@ -105,8 +108,8 @@ def dbconn(db):
 
 if __name__=='__main__':
 
+    start = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     db = dbconn('test')
-
     lstock = [ {'type':'small', 'pgnm':29, 'cursor':db['cursor']}, 
         {'type':'gem', 'pgnm':21, 'cursor':db['cursor']},
         {'type':'a', 'pgnm':107, 'cursor':db['cursor']},
@@ -120,12 +123,15 @@ if __name__=='__main__':
         # print(lstock[i])
         # stock_crawler(lstock[i])
         p.apply_async( stock_crawler(lstock[i]) ) 
-        # t = stock_crawler({'cursor':db['cursor'], 'type':s['type'], 'pagenm':s['pgnm']})    
+		
+         # t = stock_crawler({'cursor':db['cursor'], 'type':s['type'], 'pagenm':s['pgnm']})    
     p.close()
     p.join()
-
     db['cursor'].close()
     db['conn'].commit() 
+
+    end = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print("################# stock fetch end at %s ...,start at %s !!######################\n" %(end,start) )
 
 
 
