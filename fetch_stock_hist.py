@@ -23,7 +23,7 @@ class cat_stck_hist(object):
 		self.__url = 'http://www.aigaogao.com/tools/history.html?s=%s'
 		self.__cat = cat
 		self.__sql = "insert into MKT_STCK_HIST values(%s,%s,%s,%s,%s,%s,%s,%s)"
-		cursor.execute("select distinct stock_id from Stocks_Details where sub_cat_cd =\'%s\' and stock_id > \'601958\'" %self.__cat)
+		cursor.execute("select distinct stock_id from Stocks_Details where sub_cat_cd =\'%s\' " %self.__cat)
 		self.__catStock = [s[0] for s in cursor.fetchall()]
 		self.loop_stock()
 
@@ -67,7 +67,7 @@ class cat_stck_hist(object):
 			hist = info.get_text(":").split(":")[0:7]
 			hist.insert(0, stockID)
 			stock.append(hist)
-		print(stock)
+		# print(stock)
 		
 		cursor.executemany(self.__sql, stock) 
 		dbconn.commit()
