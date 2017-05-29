@@ -17,7 +17,9 @@ from bs4 import BeautifulSoup
 import datetime
 import pymysql
 import time
-import http
+from selenium import webdriver
+from pandas import *
+
 
 def cat_find(s):       
     global NUM,l
@@ -37,7 +39,7 @@ def load_db(table, values):
     global cursor
     sql = "insert into {0} values(%s,%s,%s)".format(table)
     if table == 'Sub_Category':
-        sql = sql = "insert into {0} values(%s,%s,%s,%s)".format(table)
+        sql = "insert into {0} values(%s,%s,%s,%s)".format(table)
     cursor.executemany(sql, values)
 
 ## request webpage
@@ -48,13 +50,15 @@ def url_request(url):
         response = urllib.request.urlopen(request)
         result = response.read().decode('gbk')
     except:
-        print(url)
+        # print(url)
         time.sleep(10)
-        connection = http.client.HTTPConnection(url.lstrip("http://"))
-        connection.request('GET')
-        result = connection.getresponse().read().decode('gbk')
+        browser = webdriver.Chrome()
+        browser.get(url)
+        result = browser.page_source
+        browser.close()
 
     soup = BeautifulSoup(result, "html.parser")
+    
     return soup
 
 ## fetch stock details
@@ -73,9 +77,12 @@ def stock_details(lurl, pagenum, cat):
         for stock in content[1:len(content)-1]: #  the first list element is "\n", start from the second one
             stocks_l = stock.get_text(',').split(',')[0:2] ##stock_cd and stock_nm
             stocks_l.append(cat)
-            stocks.append(stocks_l) #create 2-d list, finnally insert into db
-    # print(stocks)
+            stocks.append(stocks_l) #create 2-d list, finnally insert into db     
+    #dedupe the records
+    stocks = DataFrame(stocks).drop_duplicates().values.tolist()
+    print(stocks)
     load_db("Stocks_Details", stocks)
+
 
 ## fetch subcategory
 def fetch_stock_inds(url):  
@@ -98,8 +105,8 @@ def fetch_stock_inds(url):
             if page.has_attr('value'):
                 pagenum = int(page['value'])//30 + (29+int(page['value'])%30)//30
                 # fetch stock details
-                stock_details(lurl,pagenum,cat['code'])
-    # print(category)
+                stock_details(lurl,pagenum,cat['code']) 
+    print(category)
     load_db('Sub_Category', category)
 
 
