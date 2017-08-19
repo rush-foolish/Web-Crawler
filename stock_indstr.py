@@ -37,7 +37,7 @@ def load_db(table, values):
     global cursor
     sql = "insert into {0} values(%s,%s,%s)".format(table)
     if table == 'Sub_Category':
-        sql = sql = "insert into {0} values(%s,%s,%s,%s)".format(table)
+        sql = "insert into {0} values(%s,%s,%s,%s)".format(table)
     cursor.executemany(sql, values)
 
 ## request webpage
